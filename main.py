@@ -4,6 +4,7 @@ from google import genai
 from google.genai import types
 import argparse
 from prompts import system_prompt
+from call_functions import available_functions
 
 load_dotenv()
 api_key = os.environ.get('GEMINI_API_KEY')
@@ -22,8 +23,13 @@ def main():
     response = client.models.generate_content(
     model="gemini-2.5-flash",
     contents=messages,
-    config=types.GenerateContentConfig(system_instruction=system_prompt),
+    config=types.GenerateContentConfig(tools=[available_functions], system_instruction=system_prompt),
     )
+    
+    if response.function_calls:
+        for function_call in response.function_calls:
+            print(f"Calling function: {function_call.name}({function_call.args})")
+        return
     
     if response.usage_metadata is None:
         raise RuntimeError("API request failed: usage metadata is None")
